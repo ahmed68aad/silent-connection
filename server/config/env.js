@@ -1,7 +1,6 @@
 const productionRequiredEnv = [
   "JWT_SECRET",
   "MONGO_URI",
-  "CLIENT_ORIGIN",
   "CLOUDINARY_CLOUD_NAME",
   "CLOUDINARY_API_KEY",
   "CLOUDINARY_API_SECRET",
@@ -18,6 +17,10 @@ const validateProductionEnv = () => {
   }
 
   const missing = productionRequiredEnv.filter((key) => !process.env[key]);
+
+  if (!process.env.CLIENT_ORIGIN && !process.env.CLIENT_URL && !process.env.CORS_ORIGIN) {
+    missing.push("CLIENT_ORIGIN");
+  }
 
   if (missing.length) {
     throw new Error(`Missing production environment variables: ${missing.join(", ")}`);

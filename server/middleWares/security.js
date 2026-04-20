@@ -4,7 +4,8 @@ const DEFAULT_ALLOWED_ORIGINS = [
 ];
 
 const parseAllowedOrigins = () => {
-  const configuredOrigins = process.env.CLIENT_ORIGIN || process.env.CORS_ORIGIN;
+  const configuredOrigins =
+    process.env.CLIENT_ORIGIN || process.env.CLIENT_URL || process.env.CORS_ORIGIN;
 
   if (!configuredOrigins) {
     return DEFAULT_ALLOWED_ORIGINS;
