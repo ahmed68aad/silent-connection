@@ -13,7 +13,7 @@ const parseAllowedOrigins = () => {
 
   return configuredOrigins
     .split(",")
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/+$/, ""))
     .filter(Boolean);
 };
 
