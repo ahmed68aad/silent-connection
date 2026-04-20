@@ -1,0 +1,48 @@
+const DEFAULT_ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
+
+const parseAllowedOrigins = () => {
+  const configuredOrigins = process.env.CLIENT_ORIGIN || process.env.CORS_ORIGIN;
+
+  if (!configuredOrigins) {
+    return DEFAULT_ALLOWED_ORIGINS;
+  }
+
+  return configuredOrigins
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+};
+
+const allowedOrigins = parseAllowedOrigins();
+
+const securityHeaders = (req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  next();
+};
+
+const cors = (req, res, next) => {
+  const origin = req.get("origin");
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+  }
+
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Session-Id");
+  res.setHeader("Access-Control-Max-Age", "86400");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  return next();
+};
+
+export { cors, securityHeaders };
