@@ -31,7 +31,7 @@ app.get("/", (req, res) => {
   });
 });
 app.get("/api/health", (req, res) => {
-  res.json({ success: true, status: "ok" });
+  res.json({ success: true, status: "ok", version: "cors-middleware-2026-04-21" });
 });
 app.get("/api/cors-debug", corsDebug);
 app.use("/api", generalLimiter);
