@@ -22,7 +22,10 @@ function getSessionId() {
 const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
 
 async function request(path, options = {}) {
-  const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+  const baseUrl =
+    API_BASE_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const url = path.startsWith("http") ? path : `${baseUrl}${path}`;
   let response;
 
   try {
@@ -39,8 +42,12 @@ async function request(path, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok || data.success === false) {
-    const error = new Error(data.message || "Something went wrong");
+    const error = new Error(
+      data.message || `API request failed with status ${response.status}`,
+    );
     error.code = data.code;
+    error.status = response.status;
+    error.responseData = data;
     throw error;
   }
 
