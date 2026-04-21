@@ -29,8 +29,8 @@ async function request(path, options = {}) {
   const url = path.startsWith("http")
     ? path
     : baseUrl.endsWith("/api") && normalizedPath.startsWith("/api")
-    ? `${baseUrl}${normalizedPath.slice(4)}`
-    : `${baseUrl}${normalizedPath}`;
+      ? `${baseUrl}${normalizedPath.slice(4)}`
+      : `${baseUrl}${normalizedPath}`;
   let response;
 
   try {
