@@ -19,16 +19,21 @@ function getSessionId() {
   return sessionId;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
+
 async function request(path, options = {}) {
-  const url = path;
+  const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
   let response;
 
   try {
     response = await fetch(url, options);
   } catch (networkError) {
-    throw new Error("Could not reach the API. Check the frontend API proxy and backend availability.", {
-      cause: networkError,
-    });
+    throw new Error(
+      "Could not reach the API. Check the frontend API proxy and backend availability.",
+      {
+        cause: networkError,
+      },
+    );
   }
 
   const data = await response.json().catch(() => ({}));
