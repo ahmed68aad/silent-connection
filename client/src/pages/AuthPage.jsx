@@ -36,7 +36,24 @@ export default function AuthPage() {
     } catch (error) {
       if (error.code === "EMAIL_NOT_VERIFIED" && payload.email) {
         setPendingVerificationEmail(payload.email);
+        setVerificationCode("");
+
+        try {
+          const data = await resendEmailVerification(payload.email);
+          setFeedback({
+            tone: "info",
+            message: data.message || "Enter the verification code sent to your email.",
+          });
+          return;
+        } catch (resendError) {
+          setFeedback({
+            tone: "error",
+            message: resendError.message || error.message,
+          });
+          return;
+        }
       }
+
       setFeedback({ tone: "error", message: error.message });
     } finally {
       setBusy(false);

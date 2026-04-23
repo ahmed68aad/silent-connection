@@ -44,11 +44,24 @@ async function request(path, options = {}) {
     );
   }
 
-  const data = await response.json().catch(() => ({}));
+  const responseText = await response.text().catch(() => "");
+  let data = {};
+
+  if (responseText) {
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      data = {};
+    }
+  }
 
   if (!response.ok || data.success === false) {
+    const isVercelProtection =
+      response.status === 403 && /Vercel Security Checkpoint|Deployment Protection/i.test(responseText);
     const error = new Error(
-      data.message || `API request failed with status ${response.status}`,
+      isVercelProtection
+        ? "Vercel Deployment Protection is blocking the API. Disable protection for the backend project or use the production domain."
+        : data.message || `API request failed with status ${response.status}`,
     );
     error.code = data.code;
     error.status = response.status;
