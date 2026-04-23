@@ -17,9 +17,15 @@ const validateProductionEnv = () => {
   }
 
   const missing = productionRequiredEnv.filter((key) => !process.env[key]);
+  const hasOriginConfig = Boolean(
+    process.env.CLIENT_ORIGIN || process.env.CLIENT_URL || process.env.CORS_ORIGIN
+  );
 
-  if (!process.env.CLIENT_ORIGIN && !process.env.CLIENT_URL && !process.env.CORS_ORIGIN) {
-    missing.push("CLIENT_ORIGIN");
+  if (!hasOriginConfig) {
+    console.warn(
+      "Warning: CLIENT_ORIGIN / CLIENT_URL / CORS_ORIGIN is not configured. " +
+        "API will accept requests from all origins in production."
+    );
   }
 
   if (missing.length) {
