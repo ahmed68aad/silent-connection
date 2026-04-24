@@ -18,7 +18,7 @@ Server:
 - `SMTP_FROM`
 
 Client:
-- `VITE_API_URL` (optional if the frontend uses a same-origin `/api` rewrite)
+- `VITE_API_URL` (optional outside Vercel; Vercel frontends always use same-origin `/api`)
 
 ## Smoke Test
 
@@ -36,8 +36,8 @@ Client:
 ## Production Notes
 
 - Set `CLIENT_ORIGIN` to the exact deployed frontend origin, not `*`.
-- If the client is deployed on Vercel with a rewrite from `/api/*` to the API app,
-  prefer calling `/api/*` from the browser instead of the API app's full URL.
+- Vercel frontends should proxy API traffic through same-origin `/api/*` rewrites
+  instead of calling the API deployment URL directly from the browser.
 - Use a `JWT_SECRET` with at least 32 characters.
 - Configure SPF, DKIM, and DMARC for the sender domain to reduce verification email spam.
 - Keep MongoDB network access restricted to your deployment provider where possible.

@@ -20,23 +20,13 @@ function resolveBaseUrl() {
   if (typeof window === "undefined") return API_BASE_URL;
 
   const currentOrigin = window.location.origin;
+  const isVercelFrontend = currentOrigin.endsWith(".vercel.app");
+
+  if (isVercelFrontend) {
+    return currentOrigin;
+  }
 
   if (!API_BASE_URL) return currentOrigin;
-
-  try {
-    const apiOrigin = new URL(API_BASE_URL).origin;
-
-    // Prefer same-origin requests on Vercel so the frontend rewrite can proxy
-    // to the API without triggering browser CORS preflights between projects.
-    if (
-      currentOrigin.endsWith(".vercel.app") &&
-      apiOrigin !== currentOrigin
-    ) {
-      return currentOrigin;
-    }
-  } catch {
-    return API_BASE_URL;
-  }
 
   return API_BASE_URL;
 }
