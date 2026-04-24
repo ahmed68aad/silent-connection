@@ -16,12 +16,35 @@ function getSessionId() {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
 
+function resolveBaseUrl() {
+  if (typeof window === "undefined") return API_BASE_URL;
+
+  const currentOrigin = window.location.origin;
+
+  if (!API_BASE_URL) return currentOrigin;
+
+  try {
+    const apiOrigin = new URL(API_BASE_URL).origin;
+
+    // Prefer same-origin requests on Vercel so the frontend rewrite can proxy
+    // to the API without triggering browser CORS preflights between projects.
+    if (
+      currentOrigin.endsWith(".vercel.app") &&
+      apiOrigin !== currentOrigin
+    ) {
+      return currentOrigin;
+    }
+  } catch {
+    return API_BASE_URL;
+  }
+
+  return API_BASE_URL;
+}
+
 async function request(path, options = {}) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
-  const baseUrl =
-    API_BASE_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "");
+  const baseUrl = resolveBaseUrl();
 
   const url = path.startsWith("http")
     ? path
