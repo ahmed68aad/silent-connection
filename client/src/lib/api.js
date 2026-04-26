@@ -15,18 +15,28 @@ function getSessionId() {
 }
 
 async function request(path, options = {}) {
+  const apiBaseUrl = String(import.meta.env.VITE_API_URL || "").replace(
+    /\/$/,
+    "",
+  );
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-
-  const url = path.startsWith("http") ? path : normalizedPath;
+  const url = path.startsWith("http")
+    ? path
+    : apiBaseUrl
+      ? `${apiBaseUrl}${normalizedPath}`
+      : normalizedPath;
 
   let response;
 
   try {
     response = await fetch(url, options);
   } catch (networkError) {
-    throw new Error("Could not reach the API. Make sure the backend is running.", {
-      cause: networkError,
-    });
+    throw new Error(
+      "Could not reach the API. Make sure the backend is running.",
+      {
+        cause: networkError,
+      },
+    );
   }
 
   const responseText = await response.text().catch(() => "");
