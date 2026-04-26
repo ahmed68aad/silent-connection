@@ -2,11 +2,13 @@ import mongoose from "mongoose";
 
 const DEFAULT_MONGO_URI = "mongodb://127.0.0.1:27017/silent";
 
-let cachedConnection = null;
-
 const connectDB = async () => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    // If already connected (1) or connecting (2), skip and return
+    if (
+      mongoose.connection.readyState === 1 ||
+      mongoose.connection.readyState === 2
+    ) {
       return mongoose;
     }
 
@@ -31,7 +33,6 @@ const connectDB = async () => {
     return mongoose;
   } catch (error) {
     console.error("MongoDB connection error:", error.message);
-    cachedConnection = null;
     return null;
   }
 };

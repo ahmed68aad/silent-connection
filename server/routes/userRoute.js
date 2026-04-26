@@ -6,6 +6,7 @@ import validator from "validator";
 import auth from "../middleWares/auth.js";
 import crypto from "crypto";
 import { hasMailConfig, sendVerificationEmail } from "../config/resend.js";
+import connectDB from "../config/db.js";
 import mongoose from "mongoose";
 import { profileImageUpload } from "../config/multer.js";
 import {
@@ -109,7 +110,8 @@ const createEmailVerificationCode = () => {
   return { code, codeHash, expiresAt };
 };
 
-export const ensureDbConnected = (request, response, next) => {
+export const ensureDbConnected = async (request, response, next) => {
+  await connectDB();
   if (mongoose.connection.readyState !== 1) {
     return response.status(503).json({
       success: false,
