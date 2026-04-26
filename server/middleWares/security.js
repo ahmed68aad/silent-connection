@@ -14,7 +14,10 @@ const isLocalOrigin = (origin) => {
   try {
     const { hostname } = new URL(origin);
     return (
-      hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1"
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]" ||
+      hostname === "::1"
     );
   } catch {
     return false;
@@ -45,8 +48,16 @@ const corsOptions = {
     return callback(null, false);
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "token", "X-Session-Id"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Session-Id",
+    "Accept",
+    "Origin",
+    "token",
+  ],
   credentials: true,
+  optionsSuccessStatus: 200,
 };
 
 const securityHeaders = (req, res, next) => {
