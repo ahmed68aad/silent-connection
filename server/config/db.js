@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
-const DATABASE_NAME = "silent";
-const DEFAULT_MONGO_URI = `mongodb://127.0.0.1:27017/${DATABASE_NAME}`;
+const DEFAULT_MONGO_URI = "mongodb://127.0.0.1:27017/silent";
 
 const connectDB = async () => {
   try {
@@ -14,9 +13,8 @@ const connectDB = async () => {
     }
 
     const conn = await mongoose.connect(uri || DEFAULT_MONGO_URI, {
-      dbName: DATABASE_NAME,
-      serverSelectionTimeoutMS: 3000, // Fail faster on Vercel
-      connectTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 10000,
     });
 
     console.log(
