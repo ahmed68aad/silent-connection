@@ -109,7 +109,7 @@ const createEmailVerificationCode = () => {
   return { code, codeHash, expiresAt };
 };
 
-const ensureDbConnected = (request, response, next) => {
+export const ensureDbConnected = (request, response, next) => {
   if (mongoose.connection.readyState !== 1) {
     return response.status(503).json({
       success: false,

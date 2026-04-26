@@ -4,6 +4,7 @@ import Post from "../models/postModel.js";
 import auth from "../middleWares/auth.js";
 import Group from "../models/groupModel.js";
 import { uploadLimiter } from "../middleWares/rateLimit.js";
+import { ensureDbConnected } from "./userRoute.js";
 
 const PostRouter = express.Router();
 
@@ -50,7 +51,10 @@ const buildViewSummary = (post, currentUserId) => {
 
   const myView = byUser.find((view) => view.userId === myUserId);
   const otherUserViews = byUser.filter((view) => view.userId !== myUserId);
-  const otherUserCount = otherUserViews.reduce((sum, view) => sum + view.count, 0);
+  const otherUserCount = otherUserViews.reduce(
+    (sum, view) => sum + view.count,
+    0,
+  );
 
   return {
     total: byUser.reduce((sum, view) => sum + view.count, 0),
@@ -193,8 +197,12 @@ const formatPost = (post, currentUserId) => ({
     : null,
   views: buildViewSummary(post, currentUserId),
   engagement:
-    post.audience === "couple" ? buildCoupleEngagement(post, currentUserId) : null,
+    post.audience === "couple"
+      ? buildCoupleEngagement(post, currentUserId)
+      : null,
 });
+
+PostRouter.use(ensureDbConnected);
 
 PostRouter.post(
   "/upload",
@@ -307,7 +315,8 @@ PostRouter.get("/feed", auth, async (req, res) => {
     const skip = (page - 1) * limit;
     const scope = await getFeedScope(req);
     const query = scope.query;
-    const sessionId = getRequestSessionId(req) || `legacy-${req.user._id.toString()}`;
+    const sessionId =
+      getRequestSessionId(req) || `legacy-${req.user._id.toString()}`;
 
     const [posts, total] = await Promise.all([
       Post.find(query)

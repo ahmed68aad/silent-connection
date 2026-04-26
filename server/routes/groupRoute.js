@@ -2,10 +2,12 @@ import express from "express";
 import auth from "../middleWares/auth.js";
 import Group from "../models/groupModel.js";
 import Post from "../models/postModel.js";
+import { ensureDbConnected } from "./userRoute.js";
 
 const GroupRouter = express.Router();
 
-const createInviteCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+const createInviteCode = () =>
+  Math.random().toString(36).substring(2, 8).toUpperCase();
 
 const generateUniqueGroupInviteCode = async () => {
   let inviteCode = createInviteCode();
@@ -42,7 +44,7 @@ const formatGroup = (group, currentCoupleId) => ({
   createdAt: group.createdAt,
 });
 
-GroupRouter.use(auth, ensureConnectedCouple);
+GroupRouter.use(ensureDbConnected, auth, ensureConnectedCouple);
 
 GroupRouter.post("/", async (req, res) => {
   try {
