@@ -70,7 +70,10 @@ const createToken = (id) => {
 const escapeRegExp = (value) =>
   String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const normalizeEmail = (email) => email?.trim().toLowerCase();
+const normalizeEmail = (email) => {
+  if (typeof email !== "string") return "";
+  return email.trim().toLowerCase();
+};
 
 const findUserByEmail = async (email) => {
   const normalizedEmail = normalizeEmail(email);
@@ -276,7 +279,7 @@ UserRouter.post("/login", authLimiter, async (request, response) => {
 
     response.json({ success: true, token, user: sanitizeUser(user) });
   } catch (error) {
-    console.log(error);
+    console.error("Login Error:", error);
     if (error.statusCode) {
       return response.status(error.statusCode).json({
         success: false,
