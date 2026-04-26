@@ -71,10 +71,11 @@ if (process.env.NODE_ENV === "production") {
 
   app.use(express.static(clientBuildPath));
 
-  app.get("*", (req, res, next) => {
+  app.get(/.*/, (req, res, next) => {
     if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
       return next();
     }
+
     res.sendFile(path.join(clientBuildPath, "index.html"));
   });
 }
