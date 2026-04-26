@@ -2,6 +2,7 @@ const parseOrigins = (val) => {
   if (!val) return [];
   // Handle comma-separated strings from environment variables
   return String(val)
+    .replace(/['"]/g, "") // Remove potential quotes from env vars
     .split(",")
     .map((origin) => origin.trim().toLowerCase().replace(/\/$/, ""))
     .filter(Boolean);
@@ -17,16 +18,16 @@ const allowedOrigins = new Set([
 ]);
 
 const isAllowedOrigin = (origin) => {
-  if (!origin) return true;
+  // Handle server-to-server, Postman, or certain browser redirects (null origin)
+  if (!origin || origin === "null") return true;
 
   const normalizedOrigin = origin.trim().toLowerCase().replace(/\/$/, "");
 
-  if (allowedOrigins.has(normalizedOrigin)) return true;
-
-  // Additional check for localhost/127.0.0.1 with any port
   if (
+    allowedOrigins.has(normalizedOrigin) ||
     normalizedOrigin.startsWith("http://localhost:") ||
-    normalizedOrigin.startsWith("http://127.0.0.1:")
+    normalizedOrigin.startsWith("http://127.0.0.1:") ||
+    normalizedOrigin.startsWith("http://[::1]:")
   ) {
     return true;
   }
@@ -49,7 +50,9 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    console.warn(`CORS blocked for origin: ${origin}`);
+    // This log will appear in your Vercel Dashboard -> Logs
+    // It's critical to see what the 'origin' actually is if it's still failing
+    console.warn(`[CORS REJECTED] Origin: "${origin}"`);
     return callback(null, false);
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
