@@ -49,7 +49,8 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
+  await connectDB();
   res.json({
     success: true,
     database: mongoose.connection.db?.databaseName || null,
