@@ -5,7 +5,6 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:5174",
-  "http://127.0.0.1:5173",
 ]
   .filter(Boolean)
   .map((origin) => origin.replace(/\/$/, ""));
@@ -15,10 +14,7 @@ const isLocalOrigin = (origin) => {
   try {
     const { hostname } = new URL(origin);
     return (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "[::1]" ||
-      hostname === "::1"
+      hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1"
     );
   } catch {
     return false;

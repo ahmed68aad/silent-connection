@@ -15,8 +15,8 @@ const connectDB = async () => {
 
     const conn = await mongoose.connect(uri || DEFAULT_MONGO_URI, {
       dbName: DATABASE_NAME,
-      serverSelectionTimeoutMS: 5000, // Timeout for selecting a server
-      connectTimeoutMS: 10000, // Timeout for initial connection
+      serverSelectionTimeoutMS: 3000, // Fail faster on Vercel
+      connectTimeoutMS: 5000,
     });
 
     console.log(

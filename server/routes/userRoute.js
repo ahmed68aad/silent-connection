@@ -6,6 +6,7 @@ import validator from "validator";
 import auth from "../middleWares/auth.js";
 import crypto from "crypto";
 import { hasMailConfig, sendVerificationEmail } from "../config/resend.js";
+import mongoose from "mongoose";
 import { profileImageUpload } from "../config/multer.js";
 import {
   authLimiter,
@@ -247,6 +248,14 @@ UserRouter.post("/register", authLimiter, async (request, response) => {
 UserRouter.post("/login", authLimiter, async (request, response) => {
   const { email, password } = request.body;
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return response.status(503).json({
+        success: false,
+        message:
+          "Database connection is not ready. Please try again in a moment.",
+      });
+    }
+
     if (!email || !password) {
       return response.status(400).json({
         success: false,

@@ -10,3 +10,5 @@ server.listen(port, () => {
     `Server is running on port ${port} in ${process.env.NODE_ENV || "development"} mode`,
   );
 });
+
+export default app;
