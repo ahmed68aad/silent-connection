@@ -7,9 +7,12 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 const isLocalOrigin = (origin) => {
+  if (!origin) return false;
   try {
     const { hostname } = new URL(origin);
-    return hostname === "localhost" || hostname === "127.0.0.1";
+    return (
+      hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1"
+    );
   } catch {
     return false;
   }

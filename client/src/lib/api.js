@@ -29,7 +29,11 @@ async function request(path, options = {}) {
   let response;
 
   try {
-    response = await fetch(url, options);
+    response = await fetch(url, {
+      ...options,
+      // Required because server CORS is configured with credentials: true
+      credentials: options.credentials || "include",
+    });
   } catch (networkError) {
     throw new Error(
       "Could not reach the API. Make sure the backend is running.",
