@@ -32,6 +32,7 @@ const allowedOrigins = new Set([
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "https://silent-connection-cli.vercel.app",
+  "https://silent-connection.vercel.app",
   ...configuredOrigins,
 ]);
 
