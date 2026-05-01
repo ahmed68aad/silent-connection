@@ -21,10 +21,15 @@ import {
 } from "../lib/api";
 
 const AuthContext = createContext(null);
-const STORAGE_KEY = "silent-connection-token";
+const STORAGE_KEY = "token";
+const LEGACY_STORAGE_KEY = "silent-connection-token";
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem(STORAGE_KEY));
+  const [token, setToken] = useState(
+    () =>
+      localStorage.getItem(STORAGE_KEY) ||
+      localStorage.getItem(LEGACY_STORAGE_KEY),
+  );
   const [user, setUser] = useState(null);
   const [couple, setCouple] = useState(null);
   const [groups, setGroups] = useState([]);
@@ -41,6 +46,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!token) {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
       setUser(null);
       setCouple(null);
       setGroups([]);
@@ -50,6 +56,7 @@ export function AuthProvider({ children }) {
     }
 
     localStorage.setItem(STORAGE_KEY, token);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
 
     const bootstrap = async () => {
       try {
@@ -138,6 +145,7 @@ export function AuthProvider({ children }) {
 
   const finishAuth = async (action, payload) => {
     const data = await action(payload);
+    localStorage.setItem(STORAGE_KEY, data.token);
     setToken(data.token);
     setUser(data.user);
     return data;
@@ -145,6 +153,7 @@ export function AuthProvider({ children }) {
 
   const finishEmailVerification = async (payload) => {
     const data = await verifyEmail(payload);
+    localStorage.setItem(STORAGE_KEY, data.token);
     setToken(data.token);
     setUser(data.user);
     return data;

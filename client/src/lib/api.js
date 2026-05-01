@@ -1,4 +1,16 @@
 const SESSION_STORAGE_KEY = "silent-connection-session-id";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+function joinApiUrl(path) {
+  if (path.startsWith("http")) return path;
+
+  const baseUrl = API_BASE_URL.replace(/\/+$/, "");
+  const apiBaseUrl = baseUrl.endsWith("/api") ? baseUrl : `${baseUrl}/api`;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const pathWithoutApiPrefix = normalizedPath.replace(/^\/api(?=\/|$)/, "");
+
+  return `${apiBaseUrl}${pathWithoutApiPrefix}`;
+}
 
 function getSessionId() {
   if (typeof window === "undefined") return "";
@@ -15,8 +27,7 @@ function getSessionId() {
 }
 
 async function request(path, options = {}) {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = path.startsWith("http") ? path : normalizedPath;
+  const url = joinApiUrl(path);
 
   let response;
 
@@ -60,16 +71,16 @@ async function request(path, options = {}) {
   return data;
 }
 
-function authHeaders(token) {
+function authHeaders() {
   return {
-    Authorization: `Bearer ${token}`,
+    token: localStorage.getItem("token"),
     "X-Session-Id": getSessionId(),
   };
 }
 
 // ===== AUTH =====
 export async function register(payload) {
-  return request("/api/users/register", {
+  return request("/users/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -77,7 +88,7 @@ export async function register(payload) {
 }
 
 export async function login(payload) {
-  return request("/api/users/login", {
+  return request("/users/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -85,7 +96,7 @@ export async function login(payload) {
 }
 
 export async function resendVerification(email) {
-  return request("/api/users/resend-verification", {
+  return request("/users/resend-verification", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
@@ -93,7 +104,7 @@ export async function resendVerification(email) {
 }
 
 export async function verifyEmail(payload) {
-  return request("/api/users/verify-email", {
+  return request("/users/verify-email", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -101,13 +112,13 @@ export async function verifyEmail(payload) {
 }
 
 export async function getMe(token) {
-  return request("/api/users/me", {
+  return request("/users/me", {
     headers: authHeaders(token),
   });
 }
 
 export async function updateProfileImage(token, formData) {
-  return request("/api/users/profile-image", {
+  return request("/users/profile-image", {
     method: "POST",
     headers: authHeaders(token),
     body: formData,
@@ -116,13 +127,13 @@ export async function updateProfileImage(token, formData) {
 
 // ===== COUPLES =====
 export async function getCoupleStatus(token) {
-  return request("/api/couples/status", {
+  return request("/couples/status", {
     headers: authHeaders(token),
   });
 }
 
 export async function connectCouple(token, inviteCode) {
-  return request("/api/couples/connect", {
+  return request("/couples/connect", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -133,7 +144,7 @@ export async function connectCouple(token, inviteCode) {
 }
 
 export async function disconnectCouple(token) {
-  return request("/api/couples/disconnect", {
+  return request("/couples/disconnect", {
     method: "POST",
     headers: authHeaders(token),
   });
@@ -141,13 +152,13 @@ export async function disconnectCouple(token) {
 
 // ===== GROUPS =====
 export async function getGroups(token) {
-  return request("/api/groups", {
+  return request("/groups", {
     headers: authHeaders(token),
   });
 }
 
 export async function createGroup(token, payload) {
-  return request("/api/groups", {
+  return request("/groups", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -158,7 +169,7 @@ export async function createGroup(token, payload) {
 }
 
 export async function joinGroup(token, inviteCode) {
-  return request("/api/groups/join", {
+  return request("/groups/join", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -169,14 +180,14 @@ export async function joinGroup(token, inviteCode) {
 }
 
 export async function leaveGroup(token, groupId) {
-  return request(`/api/groups/${groupId}/leave`, {
+  return request(`/groups/${groupId}/leave`, {
     method: "POST",
     headers: authHeaders(token),
   });
 }
 
 export async function transferGroupOwnership(token, groupId, targetCoupleId) {
-  return request(`/api/groups/${groupId}/transfer-ownership`, {
+  return request(`/groups/${groupId}/transfer-ownership`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -187,7 +198,7 @@ export async function transferGroupOwnership(token, groupId, targetCoupleId) {
 }
 
 export async function deleteGroup(token, groupId) {
-  return request(`/api/groups/${groupId}`, {
+  return request(`/groups/${groupId}`, {
     method: "DELETE",
     headers: authHeaders(token),
   });
@@ -203,13 +214,13 @@ export async function getFeed(token, options = {}) {
   if (options.feedType) params.set("feedType", options.feedType);
   if (options.groupId) params.set("groupId", options.groupId);
 
-  return request(`/api/posts/feed?${params.toString()}`, {
+  return request(`/posts/feed?${params.toString()}`, {
     headers: authHeaders(token),
   });
 }
 
 export async function uploadPost(token, formData) {
-  return request("/api/posts/upload", {
+  return request("/posts/upload", {
     method: "POST",
     headers: authHeaders(token),
     body: formData,
@@ -217,7 +228,7 @@ export async function uploadPost(token, formData) {
 }
 
 export async function deletePost(token, postId) {
-  return request(`/api/posts/${postId}`, {
+  return request(`/posts/${postId}`, {
     method: "DELETE",
     headers: authHeaders(token),
   });

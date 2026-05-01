@@ -4,20 +4,28 @@ import User from "../models/userModel.js";
 const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
+    const headerToken = req.headers.token;
 
-    if (!authHeader) {
+    if (!authHeader && !headerToken) {
       return res.status(401).json({
         success: false,
         message: "No token, please login",
       });
     }
 
-    const [scheme, token] = authHeader.split(" ");
+    let token = Array.isArray(headerToken) ? headerToken[0] : headerToken;
 
-    if (scheme !== "Bearer" || !token) {
+    if (!token && authHeader) {
+      const [scheme, bearerToken] = authHeader.split(" ");
+      if (scheme === "Bearer") {
+        token = bearerToken;
+      }
+    }
+
+    if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Invalid authorization header",
+        message: "Invalid token header",
       });
     }
 
