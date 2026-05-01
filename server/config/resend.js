@@ -2,8 +2,7 @@ import { Resend } from "resend";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const fromAddress =
-  process.env.RESEND_FROM ||
-  "Silent Connection <no-reply@silentconnection.app>";
+  process.env.RESEND_FROM || "Silent Connection <no-reply@localhost>";
 
 const hasMailConfig = Boolean(resendApiKey && fromAddress);
 

@@ -9,6 +9,14 @@ const connectDB = async () => {
       mongoose.connection.readyState === 1 ||
       mongoose.connection.readyState === 2
     ) {
+      if (mongoose.connection.db?.databaseName === "test") {
+        console.error(
+          '[Database] CRITICAL: Currently connected to "test" instead of "silent".',
+        );
+        console.error(
+          "[Database] Action required: Restart your server terminal.",
+        );
+      }
       return mongoose;
     }
 
@@ -16,11 +24,12 @@ const connectDB = async () => {
 
     if (!uri && process.env.NODE_ENV === "production") {
       throw new Error(
-        "MONGO_URI is missing in production. Please set it in the Vercel dashboard.",
+        "MONGO_URI is missing in production. Please set it in your environment variables.",
       );
     }
 
     await mongoose.connect(uri || DEFAULT_MONGO_URI, {
+      dbName: "silent",
       serverSelectionTimeoutMS: 10000,
       connectTimeoutMS: 10000,
     });

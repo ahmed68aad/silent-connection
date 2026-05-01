@@ -9,11 +9,6 @@ import { hasMailConfig, sendVerificationEmail } from "../config/resend.js";
 import connectDB from "../config/db.js";
 import mongoose from "mongoose";
 import { profileImageUpload } from "../config/multer.js";
-import {
-  authLimiter,
-  emailLimiter,
-  uploadLimiter,
-} from "../middleWares/rateLimit.js";
 
 const UserRouter = express.Router();
 const MAX_PROFILE_IMAGE_SIZE = 2 * 1024 * 1024;
@@ -79,10 +74,12 @@ const normalizeEmail = (email) => {
 
 const findUserByEmail = async (email) => {
   const normalizedEmail = normalizeEmail(email);
-
   if (!normalizedEmail) {
     return null;
   }
+
+  const dbName = mongoose.connection.db?.databaseName;
+  console.log(`[Auth] Searching for: "${normalizedEmail}" in DB: "${dbName}"`);
 
   const directUser = await User.findOne({ email: normalizedEmail }).select(
     "+password",
@@ -93,7 +90,7 @@ const findUserByEmail = async (email) => {
 
   return await User.findOne({
     email: {
-      $regex: `^${escapeRegExp(normalizedEmail)}$`,
+      $regex: `^\\s*${escapeRegExp(normalizedEmail)}\\s*$`,
       $options: "i",
     },
   }).select("+password");
@@ -111,20 +108,33 @@ const createEmailVerificationCode = () => {
 };
 
 export const ensureDbConnected = async (request, response, next) => {
-  // Always allow OPTIONS requests to pass through to the CORS middleware
-  if (request.method === "OPTIONS") {
-    return next();
-  }
+  try {
+    // Always allow OPTIONS requests to pass through to the CORS middleware
+    if (request.method === "OPTIONS") {
+      return next();
+    }
 
-  await connectDB();
-  if (mongoose.connection.readyState !== 1) {
-    return response.status(503).json({
-      success: false,
-      message:
-        "Database connection is not ready. Please try again in a moment.",
-    });
+    await connectDB();
+    if (mongoose.connection.readyState !== 1) {
+      return response.status(503).json({
+        success: false,
+        message:
+          "Database connection is not ready. Please try again in a moment.",
+      });
+    }
+
+    const dbName = mongoose.connection.db?.databaseName;
+    if (dbName === "test") {
+      console.error(
+        '[Database] ERROR: You are connected to "test". Please update MONGO_URI in .env to include "/silent"',
+      );
+    }
+
+    next();
+  } catch (error) {
+    console.error("[Database] Connection Middleware Error:", error);
+    next(error);
   }
-  next();
 };
 
 UserRouter.use(
@@ -165,7 +175,7 @@ const queueVerificationEmail = async (user) => {
   }
 };
 
-UserRouter.post("/register", authLimiter, async (request, response) => {
+UserRouter.post("/register", async (request, response) => {
   const { name, password, email } = request.body;
   try {
     const normalizedEmail = normalizeEmail(email);
@@ -276,7 +286,7 @@ UserRouter.post("/register", authLimiter, async (request, response) => {
   }
 });
 
-UserRouter.post("/login", authLimiter, async (request, response) => {
+UserRouter.post("/login", async (request, response) => {
   const { email, password } = request.body;
   try {
     if (!email || !password) {
@@ -293,6 +303,15 @@ UserRouter.post("/login", authLimiter, async (request, response) => {
         message: "User does not exist",
       });
     }
+
+    if (!user.password) {
+      console.error(`[Auth] User found but has no password field: ${email}`);
+      return response.status(400).json({
+        success: false,
+        message: "Account record is incomplete (missing password).",
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return response.status(401).json({
@@ -328,61 +347,55 @@ UserRouter.post("/login", authLimiter, async (request, response) => {
   }
 });
 
-UserRouter.post(
-  "/resend-verification",
-  emailLimiter,
-  async (request, response) => {
-    const { email } = request.body;
+UserRouter.post("/resend-verification", async (request, response) => {
+  const { email } = request.body;
 
-    try {
-      const normalizedEmail = normalizeEmail(email);
+  try {
+    const normalizedEmail = normalizeEmail(email);
 
-      if (!normalizedEmail || !validator.isEmail(normalizedEmail)) {
-        return response.status(400).json({
-          success: false,
-          message: "Please enter a valid email",
-        });
-      }
-
-      const genericResponse = {
-        success: true,
-        message:
-          "If this account needs verification, a new code has been sent.",
-      };
-
-      const user = await findUserByEmail(normalizedEmail);
-
-      if (!user || user.emailVerified) {
-        return response.json(genericResponse);
-      }
-
-      if (!hasMailConfig) {
-        return response.status(503).json({
-          success: false,
-          message:
-            "Email sending is not configured. Add RESEND_API_KEY and RESEND_FROM to server/.env.",
-        });
-      }
-
-      await queueVerificationEmail(user);
-      return response.json(genericResponse);
-    } catch (error) {
-      console.log(error);
-      return response.status(500).json({
+    if (!normalizedEmail || !validator.isEmail(normalizedEmail)) {
+      return response.status(400).json({
         success: false,
-        message: "Failed to resend verification email",
+        message: "Please enter a valid email",
       });
     }
-  },
-);
 
-UserRouter.post("/verify-email", emailLimiter, async (request, response) => {
+    const genericResponse = {
+      success: true,
+      message: "If this account needs verification, a new code has been sent.",
+    };
+
+    const user = await findUserByEmail(normalizedEmail);
+
+    if (!user || user.emailVerified) {
+      return response.json(genericResponse);
+    }
+
+    if (!hasMailConfig) {
+      return response.status(503).json({
+        success: false,
+        message:
+          "Email sending is not configured. Add RESEND_API_KEY and RESEND_FROM to server/.env.",
+      });
+    }
+
+    await queueVerificationEmail(user);
+    return response.json(genericResponse);
+  } catch (error) {
+    console.log(error);
+    return response.status(500).json({
+      success: false,
+      message: "Failed to resend verification email",
+    });
+  }
+});
+
+UserRouter.post("/verify-email", async (request, response) => {
   const { email, code } = request.body;
 
   try {
     const normalizedEmail = normalizeEmail(email);
     const normalizedCode = String(code || "").trim();
-
     if (!normalizedEmail || !validator.isEmail(normalizedEmail)) {
       return response.status(400).json({
         success: false,
@@ -450,7 +463,6 @@ UserRouter.get("/me", auth, async (request, response) => {
 UserRouter.post(
   "/profile-image",
   auth,
-  uploadLimiter,
   profileImageUpload.single("profileImage"),
   async (request, response) => {
     try {

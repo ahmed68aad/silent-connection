@@ -3,7 +3,6 @@ import upload from "../config/multer.js";
 import Post from "../models/postModel.js";
 import auth from "../middleWares/auth.js";
 import Group from "../models/groupModel.js";
-import { uploadLimiter } from "../middleWares/rateLimit.js";
 import { ensureDbConnected } from "./userRoute.js";
 
 const PostRouter = express.Router();
@@ -207,7 +206,6 @@ PostRouter.use(ensureDbConnected);
 PostRouter.post(
   "/upload",
   auth,
-  uploadLimiter,
   ensurePostingAvailable,
   upload.single("image"),
   async (req, res) => {

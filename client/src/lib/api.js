@@ -15,16 +15,8 @@ function getSessionId() {
 }
 
 async function request(path, options = {}) {
-  const apiBaseUrl = String(
-    import.meta.env.VITE_API_URL || "https://silent-connection-api.vercel.app",
-  ).replace(/\/$/, "");
-
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = path.startsWith("http")
-    ? path
-    : apiBaseUrl
-      ? `${apiBaseUrl}${normalizedPath}`
-      : normalizedPath;
+  const url = path.startsWith("http") ? path : normalizedPath;
 
   let response;
 

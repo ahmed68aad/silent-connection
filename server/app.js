@@ -10,8 +10,6 @@ import UserRouter from "./routes/userRoute.js";
 import CoupleRouter from "./routes/coupleRoute.js";
 import GroupRouter from "./routes/groupRoute.js";
 import { errorHandler, notFound } from "./middleWares/errorHandler.js";
-import { generalLimiter } from "./middleWares/rateLimit.js";
-import { corsOptions, securityHeaders } from "./middleWares/security.js";
 import { uploadsRoot } from "./config/multer.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,10 +19,9 @@ const app = express();
 app.disable("x-powered-by");
 
 // ✅ CORS لازم يبقى أول حاجة
-app.use(cors(corsOptions));
+app.use(cors());
 
-// ✅ security + body parser
-app.use(securityHeaders);
+// ✅ body parser
 app.use(express.json({ limit: "1mb" }));
 
 // ✅ static files
@@ -41,39 +38,40 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/health", async (req, res) => {
-  await connectDB();
-  res.json({
-    success: true,
-    database: mongoose.connection.db?.databaseName || null,
-    readyState: mongoose.connection.readyState,
-    mongoUriExists: Boolean(process.env.MONGO_URI),
-    nodeEnv: process.env.NODE_ENV,
-  });
-});
+  try {
+    await connectDB();
+    const dbName = mongoose.connection.db?.databaseName;
 
-// ✅ rate limiter
-app.use("/api", generalLimiter);
+    if (dbName === "test") {
+      console.warn(
+        '[Database] ALERT: Application is connected to "test" database.',
+      );
+    } else {
+      console.log(`[Database] Connected to: "${dbName}"`);
+    }
+
+    res.json({
+      success: true,
+      database: dbName || null,
+      isCorrectDatabase: dbName === "silent",
+      readyState: mongoose.connection.readyState,
+      mongoUriExists: Boolean(process.env.MONGO_URI),
+      nodeEnv: process.env.NODE_ENV,
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      message: "Database health check failed",
+      error: error.message,
+    });
+  }
+});
 
 // ✅ routes
 app.use("/api/posts", PostRouter);
 app.use("/api/users", UserRouter);
 app.use("/api/couples", CoupleRouter);
 app.use("/api/groups", GroupRouter);
-
-// ✅ production frontend
-if (process.env.NODE_ENV === "production") {
-  const clientBuildPath = path.resolve(__dirname, "../client/dist");
-
-  app.use(express.static(clientBuildPath));
-
-  app.get(/.*/, (req, res, next) => {
-    if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
-      return next();
-    }
-
-    res.sendFile(path.join(clientBuildPath, "index.html"));
-  });
-}
 
 // ✅ errors
 app.use(notFound);
