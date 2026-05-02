@@ -1,5 +1,8 @@
 const SESSION_STORAGE_KEY = "silent-connection-session-id";
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const DEFAULT_API_BASE_URL = import.meta.env.DEV
+  ? ""
+  : "https://silent-connection-production.up.railway.app";
+const API_BASE_URL = import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL;
 
 function joinApiUrl(path) {
   if (path.startsWith("http")) return path;
@@ -10,6 +13,17 @@ function joinApiUrl(path) {
   const pathWithoutApiPrefix = normalizedPath.replace(/^\/api(?=\/|$)/, "");
 
   return `${apiBaseUrl}${pathWithoutApiPrefix}`;
+}
+
+export function resolveAssetUrl(path) {
+  if (!path || path.startsWith("http") || path.startsWith("data:")) {
+    return path;
+  }
+
+  const baseUrl = API_BASE_URL.replace(/\/+$/, "").replace(/\/api$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  return `${baseUrl}${normalizedPath}`;
 }
 
 function getSessionId() {

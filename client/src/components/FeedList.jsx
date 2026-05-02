@@ -1,5 +1,6 @@
 import { Check, Link as LinkIcon, MoreVertical, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { resolveAssetUrl } from "../lib/api";
 import UserAvatar from "./UserAvatar";
 
 function formatDate(value) {
@@ -161,7 +162,11 @@ export default function FeedList({ posts, onDelete, deletingId, onLoadMore, hasM
               </div>
             </div>
 
-            <img className="post-image" src={post.image} alt={post.caption || "Shared post"} />
+            <img
+              className="post-image"
+              src={resolveAssetUrl(post.image)}
+              alt={post.caption || "Shared post"}
+            />
 
             <div className="post-details-block">
               {post.audience === "couple" ? renderCoupleStats(post) : renderGroupStats(post)}

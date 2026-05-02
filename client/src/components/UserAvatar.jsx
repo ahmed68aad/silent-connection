@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { resolveAssetUrl } from "../lib/api";
 
 const getInitials = (name = "", email = "") => {
   const source = name.trim() || email.trim();
@@ -18,6 +19,7 @@ const getInitials = (name = "", email = "") => {
 
 export default function UserAvatar({ user, size = "md", className = "" }) {
   const image = user?.profileImage;
+  const imageUrl = resolveAssetUrl(image);
   const [imageFailed, setImageFailed] = useState(false);
   const label = user?.name || user?.email || "User";
   const classes = ["user-avatar", `user-avatar-${size}`, className].filter(Boolean).join(" ");
@@ -30,7 +32,7 @@ export default function UserAvatar({ user, size = "md", className = "" }) {
   return (
     <span className={classes} aria-label={label} title={label}>
       {showImage ? (
-        <img src={image} alt="" onError={() => setImageFailed(true)} />
+        <img src={imageUrl} alt="" onError={() => setImageFailed(true)} />
       ) : (
         <span>{getInitials(user?.name, user?.email)}</span>
       )}
